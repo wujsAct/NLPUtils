@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -36,17 +38,75 @@ public class OpenIEDemo {
 	
 	public static void main(String[] args) throws Exception {
 		
-		parseXMl(dirPaht+"ace2004.xml");
+		HashMap<String, ArrayList> docData = parseXMl(dirPaht+"ace2004.xml");
 		
 		Properties props = PropertiesUtils.asProperties("annotators",
 				"tokenize,ssplit,pos,lemma,depparse,natlog,openie");
 		StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-		// Annotate an example document.
-		String text;
-		// String fileN = "C:/Users/DELL/Desktop/chtb_227.eng";
-		// text = IOUtils.slurpFile(fileN);
-		String text1 = "West Indian all-rounder Phil Simmons took four for 38 on Friday";
-		Annotation doc = new Annotation(text1);
+		
+		Iterator iter = docData.entrySet().iterator();
+		while (iter.hasNext()) {
+			Map.Entry entry = (Map.Entry) iter.next();
+		    String fileN = (String) entry.getKey();
+		    ArrayList val = (ArrayList) entry.getValue();
+		    annoteText(fileN,pipeline);
+		}
+		
+		
+		
+	}
+		
+	/**
+	 * 
+	 * @param xmlfileName
+	 * @return HashMap(fileName, mentions)
+	 */
+	public static HashMap<String, ArrayList> parseXMl(String xmlfileName) {
+		File f=new File(xmlfileName); 
+		DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance(); 
+		DocumentBuilder builder = null;
+		try {
+			builder = factory.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} 
+		Document data = null;
+		try {
+			data = builder.parse(f);
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		ArrayList<String> docNames = new ArrayList<String>();
+		HashMap<String,ArrayList> docData = new HashMap<String, ArrayList>();
+		NodeList docs = data.getElementsByTagName("document");
+		for (int i=0; i<docs.getLength(); i++){
+			Node doc = docs.item(i);
+			//获取doc的name
+			String name = doc.getAttributes().getNamedItem("docName").getNodeValue();
+			docNames.add(name);
+			System.out.println("****"+name+"***");
+			NodeList annots = doc.getChildNodes();
+			ArrayList<String[]> ments = new ArrayList<String[]>();
+			for(int j=0;j<annots.getLength();j++){
+				 Node annot = annots.item(j);
+				 NodeList mentsInfos = annot.getChildNodes();
+				 String[] mention = new String[4];
+				 for(int k=0;k<mentsInfos.getLength();k++){
+					 Node mentinfo = mentsInfos.item(k);
+					 mention[k] = mentinfo.getTextContent();
+				 }
+				 ments.add(mention);
+			}
+			docData.put(name, ments);
+		}
+		return docData;
+    }
+	
+	public static void annoteText(String fileN,StanfordCoreNLP pipeline) throws IOException{
+		String text = IOUtils.slurpFile(fileN);
+		Annotation doc = new Annotation(text);
 		pipeline.annotate(doc);
 		// Loop over sentences in the document
 		int sentNo = 0;
@@ -80,72 +140,22 @@ public class OpenIEDemo {
 			ChunkerModel chunkModel = new ChunkerModel(chunkModelIn);
 			ChunkerME chunker = new ChunkerME(chunkModel);
 			int size = sentL.size();
-			String[] senta = (String[]) sentL.toArray(new String[size]);
+			String[] senta = sentL.toArray(new String[size]);
 			size = posL.size();
-			String[] posa = (String[]) posL.toArray(new String[size]);
+			String[] posa = posL.toArray(new String[size]);
 			String tag[] = chunker.chunk(senta, posa);
 			int i = 0;
 			for (String ti : tag) {
 				System.out.println(senta[i] + ' ' + posa[i] + ' ' + ti);
 				i += 1;
 			}
-
 			chunkModelIn.close();
 
 			System.out.println(sentence.toString());
 			// Print SemanticGraph
 			StanfordCoreNLP.clearAnnotatorPool();
 		}
-		
 	}
-	/**
-	 * 
-	 * @param xmlfileName
-	 * @return HashMap(fileName, mentions)
-	 */
-	public static HashMap<String, ArrayList> parseXMl(String xmlfileName) {
-		File f=new File(xmlfileName); 
-		DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance(); 
-		DocumentBuilder builder = null;
-		try {
-			builder = factory.newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} 
-		Document data = null;
-		try {
-			data = builder.parse(f);
-		} catch (SAXException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		ArrayList<String> docNames = new ArrayList<String>();
-		HashMap<String,ArrayList> docData = new HashMap<String, ArrayList>();
-		NodeList docs = data.getElementsByTagName("document");
-		for (int i=0; i<docs.getLength(); i++){
-			Node doc = docs.item(i);
-			//获取doc的name
-			String name = doc.getAttributes().getNamedItem("docName").getNodeValue();
-			docNames.add(name);
-			System.out.println("****"+name+"***");
-			NodeList annots = doc.getChildNodes();
-			ArrayList ments = new ArrayList();
-			for(int j=0;j<annots.getLength();j++){
-				 Node annot = annots.item(j);
-				 NodeList mentsInfos = annot.getChildNodes();
-				 String[] mention = new String[4];
-				 for(int k=0;k<mentsInfos.getLength();k++){
-					 Node mentinfo = mentsInfos.item(k);
-					 mention[k] = mentinfo.getTextContent();
-				 }
-				 ments.add(mention);
-			}
-			docData.put(name, ments);
-		}
-		return docData;
-    }
-	
 }
 /***
  * System.out.println(sentence.get(SemanticGraphCoreAnnotations.
