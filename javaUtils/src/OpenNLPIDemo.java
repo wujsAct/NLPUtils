@@ -1,10 +1,15 @@
 import edu.stanford.nlp.io.IOUtils;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,7 +47,7 @@ public class OpenNLPIDemo {
 	static String dataPath=dirPath+"ace/";
 	static String ACEFileName = dataPath+"aceData.txt";
 	static String sentid2aNosNoName = dataPath + "sentid2aNosNoid.txt";
-	static String entMen2aNosNoName = dataPath + "entMen2aNosNoid.txt";
+	static String entMen2aNosNoName =dataPath+"entMen2aNosNoid.txt";
 	static String aid2Name = dataPath + "aid2Name.txt";
 	static Integer aNo = 0; 
 	static Integer allMentions = 0;
@@ -199,12 +204,22 @@ public class OpenNLPIDemo {
 			throws IOException {
 		String text = IOUtils.slurpFile(dataPath + "RawTexts/" + fileN);
 		System.out.println(text);
+		/**
 		FileWriter entmfileWriter = new FileWriter(entMen2aNosNoName, true);
 		FileWriter aceWriter = new FileWriter(ACEFileName, true);
 		FileWriter sentiWriter = new FileWriter(sentid2aNosNoName, true);
 		FileWriter aiWriter = new FileWriter(aid2Name, true);
-
-		aiWriter.write(fileN + '\n');
+		**/
+		
+		Writer aiWriter = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(new File(aid2Name),true), "UTF8"));
+		Writer aceWriter = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(new File(ACEFileName),true), "UTF8"));
+		Writer sentiWriter = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(new File(sentid2aNosNoName),true), "UTF8"));
+		Writer entmfileWriter = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(new File(entMen2aNosNoName),true), "UTF8"));
+		aiWriter.append(fileN + '\n');
 		aiWriter.flush();
 		aiWriter.close();
 		String[] sents = text.split("   ");
