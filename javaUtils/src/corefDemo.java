@@ -1,5 +1,9 @@
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+
 import edu.stanford.nlp.io.IOUtils;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -33,34 +37,38 @@ public class corefDemo {
 		String[] sents = text.split("\n\n");
 		System.out.println(sents.length);
 		
-		String sent = "";
-		String senti = "";
-		String word="";
-		Integer docId=0;
-		for(Integer i=0; i<sents.length;i++){
-			String[] iline = sents[i].split("\n");
-			Integer sentiLent = iline.length;
-			for(Integer j=0;j<sentiLent;j++){
-				//System.out.println("iline: "+j+" "+iline[j]);
-				word = iline[j].split("\t")[0];
-				senti = senti + word+" ";
+		//key: aId,ArrayList<String> senti
+		HashMap<String,ArrayList<String>> doc2sents = new HashMap<String, ArrayList<String>>();
+		for(Integer i = 0;i<sents.length;i++){
+			String[] senti = sents[i].split("\n");
+			String iline = "";
+			for(Integer j=0;j<senti.length;j++){
+				String word = senti[j].split("\t")[0];
+				iline = iline + word +"\t";
 			}
-			senti = senti.substring(0, senti.length()-1);
-			String aid = ids[i].split("_")[0];
+			iline = iline.trim();
 			
-			if(Integer.parseInt(aid)==docId){
-				sent = sent+senti+'\n';
-				senti="";
+			String docId = ids[i].split("_")[0];
+			if(doc2sents.containsKey(docId)){
+				ArrayList<String> temp = doc2sents.get(docId);
+				temp.add(iline);
+				doc2sents.put(docId, temp);
 			}
 			else{
-				getDocCoref(sent);
-				docId += 1;
-				sent="";
-				senti="";
+				ArrayList<String> temp = new ArrayList<String>();
+				temp.add(iline);
+				doc2sents.put(docId, temp);
 			}
+		}
+		for(Integer i=0;i<doc2sents.size();i++){
+			String docs ="";
+			ArrayList<String> sentsi =  doc2sents.get(String.valueOf(i));
+			for(Integer j=0; j<sentsi.size();j++){
+				docs = docs + sentsi.get(j)+"\n";
+			}
+			getDocCoref(i, docs);
 			
 		}
-		
 		return null;
 	}
 	/**
@@ -68,12 +76,11 @@ public class corefDemo {
 	 * @param text
 	 * @function generate document coreference resolution using stanford corenlp2016-10-31
 	 */
-	public static void getDocCoref(String text){
+	public static void getDocCoref(Integer docId,String text){
 		Annotation document = new Annotation(text);
 		pipeline.annotate(document);
 		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-		
-		System.out.println(sentences.size()+"\t"+text.split("\n").length);
+		System.out.println("docId:"+docId+" senLent:"+sentences.size()+"\t"+text.split("\n").length);
 		/**
 		for(CorefChain cc: document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values()){
 			//System.out.println("\t"+cc);
