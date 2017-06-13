@@ -1,14 +1,32 @@
 package tacKBP;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.jdom2.Document;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
+import org.xml.sax.InputSource;
+
+import sun.nio.ch.IOUtil;
+import edu.stanford.nlp.io.IOUtils;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
@@ -18,33 +36,38 @@ import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
 import edu.stanford.nlp.util.CoreMap;
 
 public class NLPUtils {
-	public static String readXML(String fileName) throws IOException {
-		File xmlFile = new File(fileName); // Let's get XML file as String
-												// using BufferedReader
-		// FileReader uses platform's default character encoding
-		// if you need to specify a different encoding, use InputStreamReader
-		Reader fileReader = new FileReader(xmlFile);
-		BufferedReader bufReader = new BufferedReader(fileReader);
-		StringBuilder sb = new StringBuilder();
-		String line = bufReader.readLine();
-		while (line != null) {
-			sb.append(line).append("\n");
-			line = bufReader.readLine();
-		}
-		String xml2String = sb.toString();
-		System.out.println("XML to String using BufferedReader : ");
-		System.out.println(xml2String);
-		return xml2String;
-	}
+	
+	
+	public static String convertXMLFileToString(String fileName) throws FileNotFoundException, JDOMException, IOException{
+		SAXBuilder builder = new SAXBuilder();
+        Document document = builder.build(new FileInputStream(new File( fileName)));
 
-	public static ArrayList<ArrayList<String>> getTokenPOS(
+        Format format = Format.getCompactFormat();
+        format.setEncoding("UTF-8");// 设置xml文件的字符为UTF-8，解决中文问题
+        XMLOutputter xmlout = new XMLOutputter();
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        xmlout.output(document, bo);
+        return bo.toString().trim();
+		
+		
+    }
+	public static ArrayList<ArrayList<ArrayList<String>>> getTokenPOS(
 			List<CoreMap> sentences) {
-		ArrayList<String> tokenArray = new ArrayList<String>();
-		ArrayList<String> tokenIndexArray = new ArrayList<String>();
-		ArrayList<String> posArray = new ArrayList<String>();
-		ArrayList<String> neArray = new ArrayList<String>();
+		ArrayList<ArrayList<String>> tokenArray= new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<String>> tokenIndexArray= new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<String>> posArray= new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<String>> neArray= new ArrayList<ArrayList<String>>();
+		ArrayList<String> tokens;
+		ArrayList<String> tokenIndexs;
+		ArrayList<String> poses ;
+		ArrayList<String> nes ;
+		
 		Integer sentId = 0;
 		for (CoreMap sentence : sentences) {
+			tokens = new ArrayList<String>();
+			tokenIndexs = new ArrayList<String>();
+			poses = new ArrayList<String>();
+			nes= new ArrayList<String>();
 			String newString = "";
 			// traversing the words in the current sentence
 			// a CoreLabel is a CoreMap with additional token-specific methods
@@ -58,20 +81,22 @@ public class NLPUtils {
 						.get(CoreAnnotations.CharacterOffsetBeginAnnotation.class);
 				Integer end = token
 						.get(CoreAnnotations.CharacterOffsetEndAnnotation.class);
-				tokenIndexArray.add(start + "_" + end);
+				tokenIndexs.add(start + "_" + end);
 				// newString += word+":"+start+" ";
 				String ne = token.get(NamedEntityTagAnnotation.class);
-				tokenArray.add(word);
-				posArray.add(pos);
-				neArray.add(ne);
+				//System.out.println(word+"\t"+start+"\t"+end);
+				tokens.add(word);
+				poses.add(pos);
+				nes.add(ne);
 			}
+			tokenArray.add(tokens); tokenIndexArray.add(tokenIndexs);posArray.add(poses);
 			newString = newString.trim();
-			// System.out.println(sentId+": "+newString.length()+":"+newString);
-			// System.out.println("--------------------------------");
+			//System.out.println(sentId+": "+newString.length()+":"+newString);
+			//System.out.println("--------------------------------");
 			sentId += 1;
 		}
 
-		ArrayList<ArrayList<String>> retParams = new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<ArrayList<String>>> retParams = new ArrayList<ArrayList<ArrayList<String>>>();
 		retParams.add(tokenArray);
 		retParams.add(posArray);
 		retParams.add(tokenIndexArray);
