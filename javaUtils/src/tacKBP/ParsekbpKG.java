@@ -58,14 +58,14 @@ public class ParsekbpKG {
         getAllFileName(path,listFileName);
         
         for(String e:listFileName){
-        	parser.parse(new InputSource(path+"kb_part-0001.xml"), handler);
+        	System.out.println(e);
+        	parser.parse(new InputSource(path+e), handler);
         	kbpentid2wiki = handler.getKbpentid2wikiName();
         	for(String key:kbpentid2wiki.keySet()){
         		aiWriter.write(key+"\t"+kbpentid2wiki.get(key)+"\n");
         		aiWriter.flush();
         	}
         }
-        
 		aiWriter.close();
 		System.exit(0);
 	}
@@ -94,14 +94,14 @@ class EntityHandler extends DefaultHandler {
 		if(qName.equals("entity")){
 			entid = attributes.getValue("id");
 			wikiName = attributes.getValue("name");
-			System.out.println(entid+"\t"+wikiName);
+			//System.out.println(entid+"\t"+wikiName);
 			kbpentid2wikiName.put(entid, wikiName);
 		}
 	}
 
 	@Override
 	public void endDocument() throws SAXException {
-		System.out.println("parse finish.");
+		//System.out.println("parse finish.");
 	}
 
 	@Override
