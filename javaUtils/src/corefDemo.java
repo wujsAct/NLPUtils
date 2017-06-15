@@ -22,10 +22,12 @@ import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.CoreMap;
 
 public class corefDemo {
-
 	public static String dirPath = "D:/Users/DELL/Workspaces/MyEclipse Professional 2014/protobuf/";
-	public static String dataPath = dirPath + "msnbc/";
-	public static String fcorefret = dataPath+"corefRet.txt";
+	public static String dataPath = dirPath + "data/TACKBP/2014/";
+	public static String dataset = "kbp";
+	public static String dataTag = "eval";
+	public static String processPath = dirPath + "data/TACKBP/2014/"+dataTag+"/process/";
+	public static String fcorefret = processPath+"corefRet.txt";
 	public static Properties props = new Properties();
 	//deep learning coreference is good 
 	static {
@@ -35,18 +37,20 @@ public class corefDemo {
 														// we need to utilize
 														// this formation
 		props.setProperty("coref.algorithm", "neural");
+		
+		props.setProperty("coref.neural.greedyness", "0.8");
 	}
 	public static StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
 
 	public static void main(String[] args) {
 		try {
 			getDoc();
-			/**
-			String fileN = dataPath + "smallData.txt";
-			String text = IOUtils.slurpFileNoExceptions(fileN);
-			Writer fcoref = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream(new File(fcorefret+"small"),true), "UTF8"));
-			getDocCoref(0, text, fcoref);**/
+			
+			//String fileN = dataPath + "small.txt";
+			//String text = IOUtils.slurpFileNoExceptions(fileN);
+			//Writer fcoref = new BufferedWriter(
+			//		new OutputStreamWriter(new FileOutputStream(new File(fcorefret+"small")), "UTF8"));
+			//getDocCoref(0, text, fcoref);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,13 +60,15 @@ public class corefDemo {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}finally{
 		System.exit(0);
+		}
 	}
 
 	public static String getDoc() throws IOException {
-		String fsentid2aidsNoid = dataPath + "sentid2aNosNoid.txt";
+		String fsentid2aidsNoid = processPath+ "sentid2aNosNoid.txt";
 		String text = IOUtils.slurpFileNoExceptions(fsentid2aidsNoid);
+		
 		String[] ids = text.split("\n");
 		System.out.println(ids.length);
 		//append 
@@ -70,11 +76,15 @@ public class corefDemo {
 				new OutputStreamWriter(new FileOutputStream(new File(fcorefret),true), "UTF8"));
 		
 
-		String fileN = dataPath + "msnbcData.txt";
+		//String fileN = dataPath + dataTag+".out";
+		String fileN =  processPath+dataset+"Data.txt";
 		text = IOUtils.slurpFileNoExceptions(fileN);
+		text = text.replace("¡ª", ".");  //replace those special flags
+		text = text.replace("-", ".");
 		String[] sents = text.split("\n\n");
 		System.out.println(sents.length);
-
+		//System.out.println("finalLine:"+sents[sents.length-1]);
+		//System.exit(0);
 		// key: aId,ArrayList<String> senti
 		HashMap<String, ArrayList<String>> doc2sents = new HashMap<String, ArrayList<String>>();
 		for (Integer i = 0; i < sents.length; i++) {
@@ -82,6 +92,7 @@ public class corefDemo {
 			String iline = "";
 			for (Integer j = 0; j < senti.length; j++) {
 				String word = senti[j].split("\t")[0];
+				//String word = senti[j].split(" ")[0];
 				iline = iline + word + "\t";
 			}
 			iline = iline.trim();
@@ -139,9 +150,11 @@ public class corefDemo {
 	 */
 	public static void getDocCoref(Integer docId, String text,Writer fcoref) throws IOException {
 		Annotation document = new Annotation(text);
+		System.out.println(docId);
+		//System.out.println(text);
 		pipeline.annotate(document);
 		List<CoreMap> sentences = document.get(SentencesAnnotation.class);
-		 System.out.println("docId:"+docId+" senLent:"+sentences.size()+"\t"+text.split("\n").length);
+		 //System.out.println("docId:"+docId+" senLent:"+sentences.size()+"\t"+text.split("\n").length);
 		// //one line for one sentence (ssplit)
 		if(sentences.size() != text.split("\n").length){
 			System.err.println("different sentence length");
@@ -150,11 +163,11 @@ public class corefDemo {
 				CorefCoreAnnotations.CorefChainAnnotation.class).values()) {
 			// System.out.println("\t"+cc);
 			CorefMention repMent = cc.getRepresentativeMention();
-			
+			System.out.println(repMent);
 			List<CorefMention> ments = cc.getMentionsInTextualOrder();
 			String allments = "";
 			for (CorefMention m : ments) {
-				System.out.println(m);
+				//System.out.println(m);
 				String mentStr = getRealMent(docId,m);
 				allments = allments + mentStr +"\t\t";
 			}

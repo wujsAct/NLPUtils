@@ -79,7 +79,8 @@ public class TrainTextProcess {
 	public static void main(String[] args) throws ParserConfigurationException,
 			SAXException, IOException, JDOMException {
 		NLPUtils nlpUitls = new NLPUtils();
-		String dataTag = "training";
+		String dataset = "kbp";
+		String dataTag = "eval";
 		String rawPath = "data/TACKBP/2014/";
 		// String rawPath = "data/kbp/LDC2017EDL/data/2014/";
 		String path = rawPath + dataTag + "/";
@@ -87,12 +88,14 @@ public class TrainTextProcess {
 		// String path =
 		// "data/kbp/LDC2017EDL/data/2014/training/source_documents/";
 		System.out.println("path: " + path);
-
-		String rawDataName = rawPath + dataTag + "Data.txt";
-		String sentid2aNosNoName = rawPath + dataTag + "_sentid2aNosNoid.txt";
-		String entMen2aNosNoName = rawPath + dataTag + "_entMen2aNosNoid.txt";
-		String aid2Name = rawPath + dataTag + "_aid2Name.txt";
-		String wrongEntName = rawPath + dataTag + "_nonRecognizedEnts.txt";
+		String rawDataName="";
+		
+		rawDataName = path + "process/"+dataset+"Data.txt";
+		
+		String sentid2aNosNoName = path+"process/" + "sentid2aNosNoid.txt";
+		String entMen2aNosNoName = path + "process/" +"entMen2aNosNoid.txt";
+		String aid2Name = path + "process/" +"aid2Name.txt";
+		String wrongEntName = path + "process/" +"nonRecognizedEnts.txt";
 		InputStream chunkModelIn = new FileInputStream("model/en-chunker.bin");
 		ChunkerModel chunkModel = new ChunkerModel(chunkModelIn);
 		ChunkerME chunker = new ChunkerME(chunkModel);
@@ -184,7 +187,7 @@ public class TrainTextProcess {
 			 * process the different line
 			 */
 			for (Integer i = 0; i < tokenArray.size(); i++) {
-				sentiWriter.write(aNo + "_" + sNo + "\n");
+				sentiWriter.write(aNo + "_" + i + "\n");
 				sentiWriter.flush();
 				sNo += 1;
 				ArrayList<String> tokens = tokenArray.get(i);
@@ -253,16 +256,7 @@ public class TrainTextProcess {
 				} else {
 					entmfileWriter.write(String.join(" ", tokenArray
 							.get(sent_s).subList(starti, endi))
-							+ "\t"
-							+entId
-							+"\t"
-							+ starti
-							+ "\t"
-							+ endi
-							+ "\t"
-							+ aNo
-							+ "_"
-							+ sent_s + "\n");
+							+ "\t"+entId+"\t"+ aNo+ "_"+ sent_s+ "\t"+ starti+ "\t"+ endi + "\n");
 					entmfileWriter.flush();
 					// System.out.println("mention index:"+starti+"\t"+endi+"\t"+sent_s+"\t"+sent_e+"\n");
 				}
